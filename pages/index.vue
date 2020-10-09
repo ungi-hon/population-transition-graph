@@ -2,8 +2,8 @@
   <div></div>
 </template>
 
-<script>
-import { defineComponent } from '@nuxtjs/composition-api'
+<script lang="ts">
+import { defineComponent } from 'nuxt-composition-api'
 
 export default defineComponent({
   setup() {},
