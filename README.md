@@ -1,4 +1,9 @@
-# population-transition-graph
+# 都道府県別の総人口推移グラフ
+
+## 環境設定
+
+- nuxt-composition-api
+- typescript
 
 ## Build Setup
 
