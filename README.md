@@ -1,6 +1,6 @@
 # 都道府県別の総人口推移グラフ
 
-## 環境設定
+## 開発環境
 
 - nuxt-composition-api
 - typescript
