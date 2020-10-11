@@ -1,22 +1,30 @@
 <template>
   <div class="container">
-    <p>
-      <label v-for="item in prefecturesList" :key="item.prefCode">
-        <input
-          v-model="prefecturesCheckedItems"
-          type="checkbox"
-          :name="item.prefName"
-          :value="item.prefCode"
-          @change="onChange"
-        />
-        <span>{{ item.prefName }}</span>
-      </label>
-    </p>
-    <div>
-      <input id="scales" type="checkbox" name="scales" checked />
-      <label for="scales">Scales</label>
-    </div>
-    <highcharts :options="hogeChartOptions"></highcharts>
+    <section class="prefectures-check-box">
+      <h2 class="title-text">都道府県</h2>
+      <div class="input-content">
+        <p
+          v-for="item in prefecturesList"
+          :key="item.prefCode"
+          class="input-item"
+        >
+          <label>
+            <input
+              v-model="checkedPrefecturesItems"
+              type="checkbox"
+              :name="item.prefName"
+              :value="item"
+              @change="onChange"
+            />
+            <span>{{ item.prefName }}</span>
+          </label>
+        </p>
+      </div>
+    </section>
+    <section class="highcharts">
+      <h2 class="title-text">都道府県別の総人口推移グラフ</h2>
+      <highcharts :options="hogeChartOptions"></highcharts>
+    </section>
   </div>
 </template>
 
@@ -50,7 +58,7 @@ type HogeChartOptions = {
 
 type State = {
   prefecturesList: []
-  prefecturesCheckedItems: any[]
+  checkedPrefecturesItems: any[]
   hogeChartOptions: HogeChartOptions
 }
 
@@ -62,13 +70,15 @@ type resData = {
 const useHighCharts = () => {
   const { app } = useContext()
 
+  // create Data
+
   const state: State = reactive({
     prefecturesList: [],
-    prefecturesCheckedItems: [],
+    checkedPrefecturesItems: [],
 
     hogeChartOptions: {
       title: {
-        text: ' 都道府県別の総人口推移グラフ',
+        text: '',
       },
       xAxis: {
         categories: [
@@ -101,9 +111,11 @@ const useHighCharts = () => {
           format: '{value}', // y軸の目盛り幅が値によって動的に変わる
         },
       },
-      series: [],
+      series: [{ name: '' }],
     },
   })
+
+  // life sycle
 
   useFetch(async () => {
     const res = await app.$axios.get('api/v1/prefectures', {
@@ -116,11 +128,14 @@ const useHighCharts = () => {
     state.prefecturesList = res.data.result
   })
 
+  // create methods
+
   const onChange = async () => {
     state.hogeChartOptions.series = []
-    for (const item of state.prefecturesCheckedItems) {
+
+    for (const item of state.checkedPrefecturesItems) {
       const res = await app.$axios.get(
-        `api/v1/population/composition/perYear?prefCode=${item}`,
+        `api/v1/population/composition/perYear?prefCode=${item.prefCode}`,
         {
           method: 'GET',
           headers: {
@@ -128,6 +143,7 @@ const useHighCharts = () => {
           },
         }
       )
+
       const totalPopulationData = res.data.result.data[0]
 
       const correctedData = totalPopulationData.data.map(
@@ -140,7 +156,7 @@ const useHighCharts = () => {
       )
 
       const resData = {
-        name: totalPopulationData.label,
+        name: item.prefName,
         data: correctedData,
       }
 
@@ -152,4 +168,32 @@ const useHighCharts = () => {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.container {
+  margin-top: 80px;
+
+  .prefectures-check-box {
+    max-width: 1000px;
+    margin: 0 auto;
+
+    .input-content {
+      display: flex;
+      flex-wrap: wrap;
+
+      .input-item {
+        margin: 0 10px 10px 0;
+      }
+    }
+  }
+
+  .highcharts {
+    max-width: 1000px;
+    margin: 80px auto 0;
+  }
+
+  .title-text {
+    font-weight: bold;
+    font-size: 18px;
+  }
+}
+</style>
