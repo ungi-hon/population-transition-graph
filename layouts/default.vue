@@ -1,8 +1,19 @@
 <template>
   <div>
+    <HeaderTop />
     <Nuxt />
   </div>
 </template>
+
+<script lang="ts">
+import { defineComponent } from 'nuxt-composition-api'
+import HeaderTop from '~/components/HeaderTop.vue'
+
+export default defineComponent({
+  components: { HeaderTop },
+  setup() {},
+})
+</script>
 
 <style>
 html {
@@ -15,41 +26,10 @@ html {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
+  color: #333;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-}
-
-.button--green {
-  display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #3b8070;
-  color: #3b8070;
-  text-decoration: none;
-  padding: 10px 30px;
-}
-
-.button--green:hover {
-  color: #fff;
-  background-color: #3b8070;
-}
-
-.button--grey {
-  display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #35495e;
-  color: #35495e;
-  text-decoration: none;
-  padding: 10px 30px;
-  margin-left: 15px;
-}
-
-.button--grey:hover {
-  color: #fff;
-  background-color: #35495e;
+body {
+  padding: 20px 30px;
 }
 </style>
