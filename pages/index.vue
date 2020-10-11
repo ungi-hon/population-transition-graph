@@ -42,12 +42,17 @@ export default defineComponent({
   components: {
     highcharts: Chart,
   },
+  head: {
+    title: '都道府県別の総人口推移グラフ',
+  },
   setup(_props) {
     const { state, onChange } = useHighCharts()
 
     return { ...toRefs(state), onChange }
   },
 })
+
+// 型の定義
 
 type HogeChartOptions = {
   title: { text: string }
@@ -62,9 +67,14 @@ type State = {
   hogeChartOptions: HogeChartOptions
 }
 
-type resData = {
+type CorrectedTotalPopulationData = {
+  y: number
+  name: number
+}
+
+type SeriesData = {
   name: string
-  data: { y: number; name: number }
+  data: CorrectedTotalPopulationData
 }
 
 const useHighCharts = () => {
@@ -146,21 +156,23 @@ const useHighCharts = () => {
 
       const totalPopulationData = res.data.result.data[0]
 
-      const correctedData = totalPopulationData.data.map(
+      console.log(totalPopulationData)
+
+      const correctedTotalPopulationData: CorrectedTotalPopulationData = totalPopulationData.data.map(
         ({ year, value }: { year: number; value: number }) => {
           return {
             name: year,
-            y: Number(String(value).slice(0, -4)),
+            y: Number(String(value).slice(0, -4)), // 桁が長いので千人単位にする
           }
         }
       )
 
-      const resData = {
+      const seriesData: SeriesData = {
         name: item.prefName,
-        data: correctedData,
+        data: correctedTotalPopulationData,
       }
 
-      state.hogeChartOptions.series.push(resData)
+      state.hogeChartOptions.series.push(seriesData)
     }
   }
 
@@ -194,6 +206,7 @@ const useHighCharts = () => {
   .title-text {
     font-weight: bold;
     font-size: 18px;
+    margin: 0 0 23px 0;
   }
 }
 </style>
