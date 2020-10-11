@@ -1,5 +1,17 @@
 <template>
   <div class="container">
+    <p>
+      <label v-for="item in prefecturesList" :key="item.prefCode">
+        <input
+          v-model="prefecturesCheckedItems"
+          type="checkbox"
+          :name="item.prefName"
+          :value="item.prefCode"
+          @change="onChange"
+        />
+        <span>{{ item.prefName }}</span>
+      </label>
+    </p>
     <div>
       <input id="scales" type="checkbox" name="scales" checked />
       <label for="scales">Scales</label>
@@ -23,9 +35,9 @@ export default defineComponent({
     highcharts: Chart,
   },
   setup(_props) {
-    const { state } = useHighCharts()
+    const { state, onChange } = useHighCharts()
 
-    return { ...toRefs(state) }
+    return { ...toRefs(state), onChange }
   },
 })
 
@@ -38,7 +50,13 @@ type HogeChartOptions = {
 
 type State = {
   prefecturesList: []
+  prefecturesCheckedItems: any[]
   hogeChartOptions: HogeChartOptions
+}
+
+type resData = {
+  name: string
+  data: { y: number; name: number }
 }
 
 const useHighCharts = () => {
@@ -46,6 +64,8 @@ const useHighCharts = () => {
 
   const state: State = reactive({
     prefecturesList: [],
+    prefecturesCheckedItems: [],
+
     hogeChartOptions: {
       title: {
         text: ' 都道府県別の総人口推移グラフ',
@@ -96,38 +116,39 @@ const useHighCharts = () => {
     state.prefecturesList = res.data.result
   })
 
-  useFetch(async () => {
-    const res = await app.$axios.get(
-      'api/v1/population/composition/perYear?prefCode=1',
-      {
-        method: 'GET',
-        headers: {
-          'X-API-KEY': 'ujqwj0KFo37MEjxr1OTyYWkvBp5c8MJxC99SsquU',
-        },
-      }
-    )
-    const totalPopulationData = res.data.result.data[0]
-
-    const correctedData = totalPopulationData.data.map(
-      ({ year, value }: { year: number; value: number }) => {
-        return {
-          name: year,
-          y: Number(String(value).slice(0, -4)),
+  const onChange = async () => {
+    state.hogeChartOptions.series = []
+    for (const item of state.prefecturesCheckedItems) {
+      const res = await app.$axios.get(
+        `api/v1/population/composition/perYear?prefCode=${item}`,
+        {
+          method: 'GET',
+          headers: {
+            'X-API-KEY': 'ujqwj0KFo37MEjxr1OTyYWkvBp5c8MJxC99SsquU',
+          },
         }
-      }
-    )
+      )
+      const totalPopulationData = res.data.result.data[0]
 
-    const resData = [
-      {
+      const correctedData = totalPopulationData.data.map(
+        ({ year, value }: { year: number; value: number }) => {
+          return {
+            name: year,
+            y: Number(String(value).slice(0, -4)),
+          }
+        }
+      )
+
+      const resData = {
         name: totalPopulationData.label,
         data: correctedData,
-      },
-    ]
+      }
 
-    state.hogeChartOptions.series = resData
-  })
+      state.hogeChartOptions.series.push(resData)
+    }
+  }
 
-  return { state }
+  return { state, onChange }
 }
 </script>
 
