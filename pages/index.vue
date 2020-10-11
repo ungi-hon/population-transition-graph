@@ -10,10 +10,11 @@
         >
           <label>
             <input
+              :key="item.prefCode"
               v-model="checkedPrefecturesItems"
               type="checkbox"
               :name="item.prefName"
-              :value="item"
+              :value="item.prefCode"
               @change="onChange"
             />
             <span>{{ item.prefName }}</span>
@@ -73,7 +74,7 @@ type CorrectedTotalPopulationData = {
 }
 
 type SeriesData = {
-  name: string
+  name: string | null
   data: CorrectedTotalPopulationData
 }
 
@@ -140,39 +141,52 @@ const useHighCharts = () => {
 
   // create methods
 
-  const onChange = async () => {
-    state.hogeChartOptions.series = []
+  const onChange = async (event: Event) => {
+    if (event.target instanceof HTMLInputElement) {
+      const { checked, value } = event.target
+      const valueName = event.target.getAttribute('name')
 
-    for (const item of state.checkedPrefecturesItems) {
-      const res = await app.$axios.get(
-        `api/v1/population/composition/perYear?prefCode=${item.prefCode}`,
-        {
-          method: 'GET',
-          headers: {
-            'X-API-KEY': 'ujqwj0KFo37MEjxr1OTyYWkvBp5c8MJxC99SsquU',
-          },
-        }
-      )
-
-      const totalPopulationData = res.data.result.data[0]
-
-      console.log(totalPopulationData)
-
-      const correctedTotalPopulationData: CorrectedTotalPopulationData = totalPopulationData.data.map(
-        ({ year, value }: { year: number; value: number }) => {
-          return {
-            name: year,
-            y: Number(String(value).slice(0, -4)), // 桁が長いので千人単位にする
+      if (checked) {
+        const res = await app.$axios.get(
+          `api/v1/population/composition/perYear?prefCode=${value}`,
+          {
+            method: 'GET',
+            headers: {
+              'X-API-KEY': 'ujqwj0KFo37MEjxr1OTyYWkvBp5c8MJxC99SsquU',
+            },
           }
+        )
+
+        const totalPopulationData = res.data.result.data[0]
+
+        const correctedTotalPopulationData: CorrectedTotalPopulationData = totalPopulationData.data.map(
+          ({ year, value }: { year: number; value: number }) => {
+            return {
+              name: year,
+              y: Number(String(value).slice(0, -4)), // 桁が長いので千人単位にする
+            }
+          }
+        )
+
+        const seriesData: SeriesData = {
+          name: valueName,
+          data: correctedTotalPopulationData,
         }
-      )
 
-      const seriesData: SeriesData = {
-        name: item.prefName,
-        data: correctedTotalPopulationData,
+        state.hogeChartOptions.series.push(seriesData)
+      } else {
+        const seriesNames = state.hogeChartOptions.series.map((item: any) => {
+          return item.name
+        })
+
+        const correctedSeries = state.hogeChartOptions.series.filter(
+          (_item, index: number) => {
+            return seriesNames.indexOf(valueName) !== index
+          }
+        )
+
+        state.hogeChartOptions.series = correctedSeries
       }
-
-      state.hogeChartOptions.series.push(seriesData)
     }
   }
 
